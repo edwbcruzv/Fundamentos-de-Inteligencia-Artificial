@@ -4,6 +4,7 @@
 %  Dr. Salvador Godoy C. - agosto 2015
 %  Última actualización: julio_2019
 %================================================================================
+use_module(library(clpfd)).
 
 %-----------------------------------------------------
 % Parámetros globales...
@@ -31,7 +32,7 @@ color(línea_B, gris_verde).
 color(línea_12, dorado).
 
 trayecto(línea_1, observatorio, pantitlán).
-trayecto(línea_1, cuatro_caminos, tasqueña).
+trayecto(línea_2, cuatro_caminos, tasqueña).
 trayecto(línea_3, indios_verdes, universidad).
 trayecto(línea_4, martín_carrera, santa_anita).
 trayecto(línea_5, politécnico, pantitlán).
@@ -182,9 +183,9 @@ sigue(mixcoac, barranca_del_muerto, línea_7).
 %-----------------------------------------------------
 sigue(garibaldi_lagunilla, bellas_artes, línea_8).
 sigue(bellas_artes, san_juan_de_letrán, línea_8).
-sigue(san_juan_de_letrán, salto_del_agua, línea_8).
-sigue(salto_del_agua, isabel_la_católica, línea_8).
-sigue(isabel_la_católica, doctores, línea_8).
+sigue(san_juan_de_letrán, doctores, línea_8).
+% sigue(salto_del_agua, isabel_la_católica, línea_8).
+% sigue(isabel_la_católica, doctores, línea_8).
 sigue(doctores, obrera, línea_8).
 sigue(obrera, chabacano, línea_8).
 sigue(chabacano, la_viga, línea_8).
@@ -280,3 +281,97 @@ sigue(olivos, nopalera, línea_12).
 sigue(nopalera, zapotitlán, línea_12).
 sigue(zapotitlán, tlaltenco, línea_12).
 sigue(tlaltenco, tláhuac, línea_12).
+
+es_trasbordo(el_rosario,2,[]).
+es_trasbordo(instituto_del_petróleo,4,[]).
+es_trasbordo(deportivo_18_de_marzo,4,[]).
+es_trasbordo(martín_carrera,4,[]).
+es_trasbordo(la_raza,4,[]).
+es_trasbordo(tacuba,4,[]).
+es_trasbordo(consulado,4,[]).
+es_trasbordo(guerrero,4,[]).
+es_trasbordo(garibaldi_lagunilla,3,[]).
+es_trasbordo(oceanía,4,[]).
+es_trasbordo(morelos,4,[]).
+es_trasbordo(hidalgo,4,[]).
+es_trasbordo(bellas_artes,4,[]).
+es_trasbordo(san_lázaro,4,[]).
+es_trasbordo(candelaria,4,[]).
+es_trasbordo(pino_suárez,4,[]).
+es_trasbordo(salto_del_agua,4,[]).
+es_trasbordo(balderas,4,[]).
+es_trasbordo(pantitlán,4,[]).
+es_trasbordo(chabacano,6,[]).
+es_trasbordo(jamaica,4,[]).
+es_trasbordo(santa_anita,3,[]).
+es_trasbordo(centro_médico,4,[]).
+es_trasbordo(tacubaya,5,[]).
+es_trasbordo(mixcoac,3,[]).
+es_trasbordo(zapata,4,[]).
+es_trasbordo(ermita,4,[]).
+es_trasbordo(atlatilco,4,[]).
+
+es_terminal(E,1,L):-trayecto(L,E,_);trayecto(L,_,E),\+es_trasbordo(E,_,_).
+
+%=====================para darle sentido bidireccional a los grafos==================
+conecta(A,B,L):-sigue(A,B,L);sigue(B,A,L).
+
+%====================================================================================
+% Para evitar problemas y se quede ciclando entramos al concepto del camino hamiltoniano
+% Necesitamos una lista auxiliar que almacene los vertices que ya pasamos
+% y que constantemente revise que vertices no estan en la lista auxiliar.
+%====================================================================================
+%           navergar(<origen>,<destino>,<visitados>,<ruta>).
+
+navegar(A,A,_,[A]). %el mismo nodo
+navegar(A,B,_,[A,B]):-conecta(A,B,_). %ultima arista
+navegar(A,B,Mem,[A|Ruta]):-conecta(A,Z,_), % buscamos a un posible nodo intermediario
+                        Z \== B, % Verificamos que Z y B sean diferentes.
+                        \+ member(Z, Mem), % que Z no forme parte de los nodos recorridos
+                        navegar(Z,B,[Z|Mem],Ruta).
+
+rutaH(A,B,Ruta):-navegar(A,B,[],Ruta).
+
+%=====================Para almacenar los resultados en una lista=====================
+calcula_rutas(A,B,Rutas):-findall(R, rutaH(A,B,R), Rutas).
+
+%=====================Para encontrar la ruta mas corta de la lista que ya tenemos====
+
+ruta_corta([R],R).
+ruta_corta(Rutas,R):-maplist(length, Rutas, Len_List), % se calculan todas las longitudes de las listas de rutas y se unifican en Len
+                    min_list(Len_List, Min), % se busca el numero mas pequeño de la lista Len
+                    member(R, Rutas),
+                    length(R,Min).
+
+ruta_larga([R],R).
+ruta_larga(Rutas,R):-maplist(length, Rutas, Len_List), % se calculan todas las longitudes de las listas de rutas y se unifican en Len
+                    max_list(Len_List, Max), % se busca el numero mas pequeño de la lista Len
+                    member(R, Rutas),
+                    length(R,Max).
+
+%===================================Costos===========================================
+
+grado(E,G,L):-es_trasbordo(E,G,L),!.
+grado(E,G,[L]):-es_terminal(E,G,L),!.
+grado(E,2,[L]):-conecta(E,_,L).
+
+hubo_trasbordo(EI,EF,N):-conecta(_,EI,L1),conecta(EI,EF,L2),L1 \== L2,N is 10,!. 
+hubo_trasbordo(_,_,N):-N is 0. 
+
+% suma([E|[]],Suma):-write(E),!.
+% suma([EI,EF,|Resto],S):-hubo_trasbordo(EI,EF,N),
+%                         grado(E_F,G_F,L_F),% Grado, y linea de la Estacion Final
+%                         Suma1 is N + (5 * G_F),
+%                         hubo_trasbordo(EI,EF,Suma2),
+%                         S is Suma1 + Suma2.
+% costo(Ruta,Total):-.
+
+
+%=====================Encontrando las mejors rutas===================================
+mejor_ruta(A,B,Mejor,0.0):-calcula_rutas(A,B,Rutas),
+                    ruta_corta(Rutas,Mejor).
+
+peor_ruta(A,B,Peor,0.0):-calcula_rutas(A,B,Rutas),
+                    ruta_larga(Rutas,Peor).
+                    
+% mejores_rutas(A,B,Mejores):-findall(Mejor,mejor_ruta(A,B,Mejor),Mejores).

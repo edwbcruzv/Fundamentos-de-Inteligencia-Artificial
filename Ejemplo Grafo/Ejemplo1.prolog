@@ -54,7 +54,7 @@ conecta(V1,V2):-arco(V1,V2). % arco directo a ambos nodos (unidireccional)
 % conecta(V1,V2):-arco(V1,V2);arco(V2,V1). % arco directo a ambos nodos (bidireccional)
 conecta(V1,V2):-arco(V1,Z),conecta(Z,V2). % existe un intermediario
 
-%=====================necesitamos obtener los nodos por donde pasamos, 
+%=====================necesitamos obtener los nodos por donde pasamos================ 
 ruta(V,V,[V]). % el mismo nodo
 ruta(V1,V2,[V1,V2]):-arco(V1,V2). % arco directo a ambos nodos (unidireccional)
 ruta(V1,V2,[V1|Resto]):-arco(V1,Z),ruta(Z,V2,Resto). % existe un intermediario
