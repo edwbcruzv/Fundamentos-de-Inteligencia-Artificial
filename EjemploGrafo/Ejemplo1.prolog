@@ -66,13 +66,13 @@ ruta(V1,V2,[V1|Resto]):-arco(V1,Z),ruta(Z,V2,Resto). % existe un intermediario
 %====================================================================================
 %           navergar(<origen>,<destino>,<visitados>,<ruta>).
 
-navegar2(A,A,_,[A]).
-navegar2(A,B,_,[A,B]):-arco(A,B).
-navegar2(A,B,Mem,[A|Ruta]):-arco(A,Z), % buscamos a un posible nodo intermediario
+navegar(A,A,_,[A]).
+navegar(A,B,_,[A,B]):-arco(A,B).
+navegar(A,B,Mem,[A|Ruta]):-arco(A,Z), % buscamos a un posible nodo intermediario
                         Z \== B, % Verificamos que Z y B sean diferentes.
                         \+ member(Z, Mem), % que Z no forme parte de los nodos recorridos
-                        navegar2(Z,B,[Z|Mem],Ruta). % se agrega Z a la memoria y se manda el resto de la ruta.
-rutaH(A,B,Ruta):-navegar2(A,B,[],Ruta).
+                        navegar(Z,B,[Z|Mem],Ruta). % se agrega Z a la memoria y se manda el resto de la ruta.
+rutaH(A,B,Ruta):-navegar(A,B,[],Ruta).
 
 %=====================Para almacenar los resultados en una lista=====================
 calcula_rutas(A,B,Rutas):-findall(R, rutaH(A,B,R), Rutas).
@@ -90,3 +90,6 @@ mejor_ruta(A,B,Mejor):-calcula_rutas(A,B,Rutas),
                     ruta_corta(Rutas,Mejor).
                     
 mejores_rutas(A,B,Mejores):-findall(Mejor,mejor_ruta(A,B,Mejor),Mejores).
+
+
+
